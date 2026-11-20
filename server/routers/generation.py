@@ -109,10 +109,24 @@ def start_quick_generation(req: GenerationRequest):
 
 @router.websocket("/ws/{job_id}")
 async def websocket_endpoint(websocket: WebSocket, job_id: str):
+    from server.core.security import authenticated
+    if not authenticated(websocket):
+        await websocket.close(code=4401)
+        return
+    origin = websocket.headers.get("origin")
+    if origin:
+        from urllib.parse import urlsplit
+        from server.main import allowed_origins
+        parsed = urlsplit(origin)
+        request_origin = f"{parsed.scheme}://{parsed.netloc}"
+        host_origin = f"{websocket.url.scheme}://{websocket.url.netloc}"
+        if request_origin.rstrip("/") not in allowed_origins + [host_origin]:
+            await websocket.close(code=4403)
+            return
     await manager.connect(websocket, job_id)
     try:
         while True:
-            data = await websocket.receive_text()
+            await websocket.receive_text()
     except WebSocketDisconnect:
         manager.disconnect(websocket, job_id)
 
