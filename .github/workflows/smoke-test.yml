@@ -1,0 +1,13 @@
+name: Actions smoke test
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirm Actions runner starts
+        run: echo "GitHub Actions is running for this repository."
